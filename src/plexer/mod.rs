@@ -4,43 +4,45 @@ use hyper::{Body, Client, Method, Request, Response, StatusCode, Uri};
 type HandleFn = fn(Request<Body>) -> Result<Response<Body>, hyper::Error>;
 
 #[derive(Debug)]
-struct Plexer<'a> {
-    routes: Vec<&'a Route>,
+pub struct Plexer<'a> {
+    routes: Vec<Route<'a>>,
 }
 
 impl Plexer<'_> {
     pub fn new() -> Plexer<'static> {
         Plexer {
-            routes: Vec::<&Route>::with_capacity(1),
+            routes: Vec::<Route<'_>>::new(),
         }
     }
-    pub fn register(&mut self, r: &'static Route) {
+    pub fn register(&mut self, r: Route<'static>) {
         self.routes.push(r);
     }
-    pub fn dispatch(&self) {}
+    pub fn dispatch(&self, _r: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+        Ok(Response::new(Body::from("hello world")))
+    }
 }
 
-trait Handle {
-    fn new(path: String, hf: HandleFn) -> Self;
+trait Handle<'a> {
+    fn new(path: String, methods: Vec<&'a Method>, hf: HandleFn) -> Self;
     fn handle(&self, r: Request<Body>) -> Result<Response<Body>, hyper::Error>;
 }
 
 #[derive(Debug)]
-struct Route {
+pub struct Route<'a> {
     path: String,
-    methods: Vec<Method>,
+    methods: &'a Method,
     handler: HandleFn,
 }
 
-impl Handle for Route {
-    fn new(path: String, hf: HandleFn) -> Route {
+impl<'a> Route<'a> {
+    pub fn new(path: String, method: &'a Method, hf: HandleFn) -> Route {
         Route {
             path: path,
-            methods: vec![],
+            methods: method,
             handler: hf,
         }
     }
-    fn handle(&self, r: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+    pub fn handle(&self, r: Request<Body>) -> Result<Response<Body>, hyper::Error> {
         (self.handler)(r)
     }
 }

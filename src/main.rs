@@ -1,4 +1,5 @@
 mod plexer;
+use plexer::{Plexer, Route};
 use {
     hyper::{
         service::{make_service_fn, service_fn},
@@ -8,11 +9,6 @@ use {
     tokio::net::TcpListener,
     tokio::prelude::*,
 };
-
-async fn serve_req(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
-    println!("Got a request at {:?}", req.uri());
-    Ok(Response::new(Body::from("hello world")))
-}
 
 #[tokio::main]
 async fn main() {
@@ -30,6 +26,19 @@ async fn run_server(addr: SocketAddr) {
     if let Err(e) = serve_future.await {
         eprintln!("Server error: {}", e);
     }
+}
+
+async fn serve_req(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+    println!("Got a request at {:?}", req.uri());
+
+    let mut plexer = Plexer::new();
+    plexer.register(Route::new(
+        String::from("/hello"),
+        &Method::GET,
+        |_r: Request<Body>| Ok(Response::new(Body::from("hello world"))),
+    ));
+
+    plexer.dispatch(req)
 }
 
 async fn alt_main() -> Result<(), Box<dyn std::error::Error>> {
