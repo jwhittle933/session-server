@@ -1,5 +1,4 @@
-use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Client, Method, Request, Response, StatusCode, Uri};
+use hyper::{Body, Method, Request, Response};
 
 type HandleFn = fn(Request<Body>) -> Result<Response<Body>, hyper::Error>;
 
@@ -17,7 +16,7 @@ impl Plexer<'_> {
     pub fn register(&mut self, r: Route<'static>) {
         self.routes.push(r);
     }
-    pub fn dispatch(&self, _r: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+    pub fn dispatch(&self, _req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
         Ok(Response::new(Body::from("hello world")))
     }
 }
@@ -30,7 +29,7 @@ trait Handle<'a> {
 #[derive(Debug)]
 pub struct Route<'a> {
     path: String,
-    methods: &'a Method,
+    method: &'a Method,
     handler: HandleFn,
 }
 
@@ -38,11 +37,27 @@ impl<'a> Route<'a> {
     pub fn new(path: String, method: &'a Method, hf: HandleFn) -> Route {
         Route {
             path: path,
-            methods: method,
+            method: method,
             handler: hf,
         }
     }
+    pub fn get_path(&self) -> &str {
+        &self.path
+    }
     pub fn handle(&self, r: Request<Body>) -> Result<Response<Body>, hyper::Error> {
         (self.handler)(r)
+    }
+}
+
+#[derive(Debug)]
+struct RoutingError {
+    details: String,
+}
+
+impl RoutingError {
+    fn new(msg: &str) -> RoutingError {
+        RoutingError {
+            details: msg.to_string(),
+        }
     }
 }

@@ -1,34 +1,25 @@
-mod plexer;
-use plexer::{Plexer, Route};
-use {
-    hyper::{
-        service::{make_service_fn, service_fn},
-        Body, Client, Method, Request, Response, Server, StatusCode, Uri,
-    },
-    std::net::SocketAddr,
-};
+use actix_web::{guard, web, App, HttpResponse, HttpServer, Responder};
 
-#[tokio::main]
-async fn main() {
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    let serve_future = Server::bind(&addr).serve(make_service_fn(|_| async {
-        Ok::<_, hyper::Error>(service_fn(serve_req))
-    }));
-
-    if let Err(e) = serve_future.await {
-        eprintln!("Server error: {}", e);
-    }
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        App::new()
+            .service(
+                web::scope("/mt")
+                    .guard(guard::Header("Host", "www.servetext.org"))
+                    .route("", web::to(|| HttpResponse::Ok().body("www"))),
+            )
+            .service(
+                web::scope("/lxx")
+                    .guard(guard::Header("Host", "www.servetext.org"))
+                    .route("", web::to(|| HttpResponse::Ok().body("www"))),
+            )
+    })
+    .bind("127.0.0.1:8080")?
+    .run()
+    .await
 }
 
-async fn serve_req(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
-    println!("Got a request at {:?}", req.uri());
-
-    let mut plexer = Plexer::new();
-    plexer.register(Route::new(
-        String::from("/hello"),
-        &Method::GET,
-        |_r: Request<Body>| Ok(Response::new(Body::from("hello world"))),
-    ));
-
-    plexer.dispatch(req)
+async fn index() -> impl Responder {
+    HttpResponse::Ok().body("Hello world")
 }
