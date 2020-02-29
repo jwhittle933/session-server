@@ -7,7 +7,7 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/mt")
                     .guard(guard::Header("Host", "www.servetext.org"))
-                    .route("", web::to(|| HttpResponse::Ok().body("www"))),
+                    .route("", web::to(index)),
             )
             .service(
                 web::scope("/lxx")
