@@ -1,5 +1,5 @@
 [package]
-name = "text-server"
+name = "session-server"
 version = "0.1.0"
 authors = ["Jonathan Whittle <jw@notanemail.com>"]
 edition = "2018"

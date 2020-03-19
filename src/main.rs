@@ -6,13 +6,13 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .service(
-                web::scope("/mt")
-                    .guard(guard::Header("Host", "www.servetext.org"))
+                web::scope("/read")
+                    // .guard(guard::Header("Host", "www.servetext.org"))
                     .route("", web::to(index)),
             )
             .service(
-                web::scope("/lxx")
-                    .guard(guard::Header("Host", "www.servetext.org"))
+                web::scope("/write")
+                    // .guard(guard::Header("Host", "www.servetext.org"))
                     .route("", web::to(|| HttpResponse::Ok().body("www"))),
             )
     })
